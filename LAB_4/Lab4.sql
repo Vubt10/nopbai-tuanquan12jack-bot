@@ -1,0 +1,105 @@
+﻿use PS41827_QLDA
+GO
+
+--BAI 1
+--Viết chương trình xem xét có tăng lương cho nhân viên hay không. Hiển thị cột thứ 1 là TenNV, cột thứ 2 nhận giá trị 
+DECLARE @THONGKE TABLE
+(MAPB INT, LUONGTB FLOAT)
+INSERT INTO @THONGKE
+	SELECT PHG,AVG(LUONG) FROM NHANVIEN GROUP BY PHG
+SELECT * FROM @THONGKE
+
+SELECT TENNV, PHG, LUONG, LUONGTB,
+TINHTRANG = CASE
+WHEN LUONG > LUONGTB THEN 'KHONG TANG LUONG'
+ELSE 'TANG LUONG'
+END
+FROM NHANVIEN NV JOIN @THONGKE TK ON NV.PHG= TK.MAPB
+
+--Viết chương trình phân loại nhân viên dựa vào mức lương.
+DECLARE @XETCHUCVU TABLE
+(MAPB INT, LUONGTB FLOAT)
+INSERT INTO @XETCHUCVU
+	SELECT PHG,AVG(LUONG) FROM NHANVIEN GROUP BY PHG
+SELECT * FROM @XETCHUCVU
+
+SELECT TENNV, PHG, LUONG, LUONGTB,
+CHUCVU = CASE
+WHEN LUONG > LUONGTB THEN 'TRUONG PHONG'
+ELSE 'NHAN VIEN'
+END
+FROM NHANVIEN NV JOIN @XETCHUCVU TK ON NV.PHG= TK.MAPB
+
+--.Viết chương trình hiển thị TenNV như hình bên dưới, tùy vào cột phái của nhân viên
+SELECT TENNV = CASE
+WHEN PHAI =N'NAM' THEN 'Mr.'+TENNV
+WHEN PHAI =N'NỮ' THEN 'Ms.'+TENNV
+ELSE 'Free sex.' + TENNV
+END
+FROM NHANVIEN
+
+--Viết chương trình tính thuế mà nhân viên phải đóng theo công thức: 
+SELECT TENNV, LUONG,
+THUE = CASE
+	WHEN LUONG BETWEEN 0 AND 25000 THEN LUONG * 0.1
+	WHEN LUONG BETWEEN 25000 AND 30000 THEN LUONG * 0.12
+	WHEN LUONG BETWEEN 30000 AND 40000 THEN LUONG * 0.15
+	WHEN LUONG BETWEEN 40000 AND 50000 THEN LUONG * 0.2
+	ELSE LUONG * 0.25
+	END
+FROM NHANVIEN
+
+--BAI 2
+--Cho biết thông tin nhân viên (HONV, TENLOT, TENNV) có MaNV là số chẵn.
+SELECT * FROM NHANVIEN
+DECLARE @A INT = 2, @DEM INT;
+SET @DEM = (SELECT COUNT(*) FROM NHANVIEN)
+while(@A < @DEM)
+BEGIN
+	SELECT HONV, TENLOT,TENNV FROM NHANVIEN
+	WHERE CAST(MANV AS INT) = @A;
+	SET @A = @A + 2;
+END
+
+--Cho biết thông tin nhân viên (HONV, TENLOT, TENNV) có MaNV là số chẵn nhưng không tính nhân viên có MaNV là 4.
+SELECT * FROM NHANVIEN
+DECLARE @B INT = 2, @DIEM INT
+SET @DIEM = (SELECT COUNT(*) FROM NHANVIEN)
+while(@B < @DIEM)
+BEGIN
+	IF(@B = 4)
+		BEGIN
+		SET @B = @B + 2;
+			CONTINUE;
+		END
+	SELECT HONV, TENLOT,TENNV
+	FROM NHANVIEN
+	WHERE CAST(MANV AS INT) = @B;
+	SET @B = @B + 2;
+END
+
+--BAI 3
+--Thực hiện chèn thêm một dòng dữ liệu vào bảng PhongBan theo 2 bước 
+BEGIN TRY
+	INSERT PHONGBAN (TENPHG, MAPHG, TRPHG, NG_NHANCHUC)
+	VALUES('Ke hoach',111,'017','2020-12-12')
+	PRINT 'Chen thanh cong'
+END TRY
+BEGIN CATCH
+	PRINT 'Loi' + CONVERT(VARCHAR, ERROR_NUMBER(),1)+ '=>' + ERROR_MESSAGE()
+END CATCH
+--Viết chương trình khai báo biến @chia, thực hiện phép chia @chia cho số 0 và dùng RAISERROR để thông báo lỗi. 
+
+BEGIN TRY
+	DECLARE @S1 INT = 4, @S2 INT = 0, @RE INT;
+	SET @RE = @S1/@S2;
+END TRY
+BEGIN CATCH
+	DECLARE @ErMessage nvarchar(2048),
+			@ErSeverity int,
+			@ErState int
+	SELECT @ErMessage = ERROR_MESSAGE(),
+			@ErSeverity = ERROR_SEVERITY(),
+			@ErState = ERROR_STATE()
+	RAISERROR(@ErMessage,@ErSeverity,@ErState)
+END CATCH
